@@ -35,6 +35,24 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-5px); }
     }
+
+    .chisme-card {
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .chisme-card:hover {
+      transform: scale(1.05);
+    }
+
+    .chisme-content {
+      display: none;
+      transition: max-height 0.3s ease;
+    }
+
+    .chisme-content.expanded {
+      display: block;
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -119,7 +137,7 @@
     const db = firebase.database();
 
     const adminCredentials = { username: 'adminparadiso', password: 'chismes123' };
-    let currentUser   = null;
+    let currentUser    = null;
 
     const elements = {
       adminBtn: document.getElementById('adminBtn'),
@@ -146,7 +164,7 @@
     function showModal(id) { elements[id].classList.remove('hidden'); }
     function hideModal(id) { elements[id].classList.add('hidden'); }
 
-    function saveUser  (user) {
+    function saveUser (user) {
       db.ref('users').push(user);
     }
 
@@ -175,19 +193,32 @@
 
         chismesArray.forEach(chisme => {
           const card = document.createElement('div');
-          card.className = 'bg-white text-black rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow';
+          card.className = 'chisme-card bg-white text-black rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow p-4';
           card.innerHTML = `
-            <img src="${chisme.image}" class="w-full h-48 object-cover">
-            <div class="p-6">
-              <h3 class="text-xl font-bold mb-2">${chisme.title}</h3>
-              <p class="text-gray-600 mb-4">${chisme.content}</p>
-              <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Por: ${chisme.author}</span>
-                <span>${new Date(chisme.timestamp).toLocaleDateString()}</span>
-              </div>
+            <h3 class="text-xl font-bold mb-2">${chisme.title}</h3>
+            <p class="text-gray-600 mb-4">${chisme.content.split('\n').slice(0, 2).join('\n')}...</p>
+            <div class="chisme-content" id="content-${chisme.id}">
+              <p>${chisme.content}</p>
             </div>
+            <button class="text-purple-600 mt-2 toggle-content" data-id="${chisme.id}">Leer más</button>
           `;
           elements.chismesContainer.appendChild(card);
+        });
+
+        // Agregar evento de clic para expandir el contenido
+        document.querySelectorAll('.toggle-content').forEach(button => {
+          button.addEventListener('click', function() {
+            const contentId = this.getAttribute('data-id');
+            const contentDiv = document.getElementById(`content-${contentId}`);
+            contentDiv.classList.toggle('expanded');
+            if (contentDiv.classList.contains('expanded')) {
+              contentDiv.style.display = 'block';
+              this.textContent = 'Leer menos';
+            } else {
+              contentDiv.style.display = 'none';
+              this.textContent = 'Leer más';
+            }
+          });
         });
       });
     }
@@ -203,7 +234,7 @@
       }
 
       if (username === adminCredentials.username && password === adminCredentials.password) {
-        currentUser   = username;
+        currentUser  = username;
         hideModal('loginModal');
         showModal('addChismeModal');
       } else {
@@ -211,7 +242,7 @@
           const users = snapshot.val() || {};
           const match = Object.values(users).some(user => user.username === username && user.password === password);
           if (match) {
-            currentUser   = username;
+            currentUser  = username;
             hideModal('loginModal');
             showModal('addChismeModal');
           } else {
@@ -238,7 +269,7 @@
           title,
           content,
           image: reader.result,
-          author: currentUser,
+          author: currentUser ,
           timestamp: Date.now()
         };
         
@@ -256,7 +287,7 @@
       reader.readAsDataURL(file);
     }
 
-    function registerUser  (e) {
+    function registerUser (e) {
       e.preventDefault();
       const username = elements.newUsername.value.trim();
       const password = elements.newPassword.value.trim();
@@ -273,7 +304,7 @@
           return;
         }
 
-        saveUser  ({ username, password });
+        saveUser ({ username, password });
         elements.registerForm.reset();
         hideModal('registerModal');
         alert('Usuario registrado con éxito.');
@@ -293,7 +324,7 @@
         showModal('registerModal');
       });
       elements.closeRegister.addEventListener('click', () => hideModal('registerModal'));
-      elements.registerForm.addEventListener('submit', registerUser  );
+      elements.registerForm.addEventListener('submit', registerUser );
     });
   </script>
 </body>

@@ -79,7 +79,6 @@
         <input type="text" id="username" placeholder="Usuario" required class="w-full px-4 py-2 mb-4 rounded-lg border" />
         <input type="password" id="password" placeholder="Contraseña" required class="w-full px-4 py-2 mb-6 rounded-lg border" />
         <div class="flex justify-between">
-          <button type="button" id="registerToggle" class="text-sm text-purple-600">+ Registrar nuevo miembro</button>
           <div class="space-x-2">
             <button type="button" id="closeLogin" class="text-gray-500">Cancelar</button>
             <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-lg">Entrar</button>
@@ -105,21 +104,6 @@
     </div>
   </div>
 
-  <!-- Modal Registrar Miembro -->
-  <div id="registerModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white text-black rounded-xl p-8 max-w-md w-full mx-4 shadow-xl">
-      <h3 class="text-2xl font-bold text-purple-700 mb-6">🗣 Registrar Miembro</h3>
-      <form id="registerForm">
-        <input type="text" id="newUsername" placeholder="Nuevo usuario" required class="w-full px-4 py-2 mb-4 rounded-lg border" />
-        <input type="password" id="newPassword" placeholder="Nueva contraseña" required class="w-full px-4 py-2 mb-6 rounded-lg border" />
-        <div class="flex justify-end space-x-4">
-          <button type="button" id="closeRegister" class="text-gray-500">Cancelar</button>
-          <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-lg">Registrar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script>
     // Configuración de Firebase
     const firebaseConfig = {
@@ -137,36 +121,26 @@
     const db = firebase.database();
 
     const adminCredentials = { username: 'adminparadiso', password: 'chismes123' };
-    let currentUser    = null;
+    let currentUser     = null;
 
     const elements = {
       adminBtn: document.getElementById('adminBtn'),
       loginModal: document.getElementById('loginModal'),
       addChismeModal: document.getElementById('addChismeModal'),
-      registerModal: document.getElementById('registerModal'),
       loginForm: document.getElementById('loginForm'),
       chismeForm: document.getElementById('chismeForm'),
-      registerForm: document.getElementById('registerForm'),
       username: document.getElementById('username'),
       password: document.getElementById('password'),
       chismeTitle: document.getElementById('chismeTitle'),
       chismeContent: document.getElementById('chismeContent'),
       chismeImages: document.getElementById('chismeImages'),
-      newUsername: document.getElementById('newUsername'),
-      newPassword: document.getElementById('newPassword'),
       closeLogin: document.getElementById('closeLogin'),
       closeChisme: document.getElementById('closeChisme'),
-      closeRegister: document.getElementById('closeRegister'),
       chismesContainer: document.getElementById('chismesContainer'),
-      registerToggle: document.getElementById('registerToggle')
     };
 
     function showModal(id) { elements[id].classList.remove('hidden'); }
     function hideModal(id) { elements[id].classList.add('hidden'); }
-
-    function saveUser (user) {
-      db.ref('users').push(user);
-    }
 
     function saveChisme(chisme) {
       return db.ref('chismes').push(chisme).then(ref => {
@@ -234,21 +208,11 @@
       }
 
       if (username === adminCredentials.username && password === adminCredentials.password) {
-        currentUser  = username;
+        currentUser   = username;
         hideModal('loginModal');
         showModal('addChismeModal');
       } else {
-        db.ref('users').once('value').then(snapshot => {
-          const users = snapshot.val() || {};
-          const match = Object.values(users).some(user => user.username === username && user.password === password);
-          if (match) {
-            currentUser  = username;
-            hideModal('loginModal');
-            showModal('addChismeModal');
-          } else {
-            alert('Credenciales inválidas');
-          }
-        });
+        alert('Credenciales inválidas');
       }
     }
 
@@ -287,30 +251,6 @@
       reader.readAsDataURL(file);
     }
 
-    function registerUser (e) {
-      e.preventDefault();
-      const username = elements.newUsername.value.trim();
-      const password = elements.newPassword.value.trim();
-
-      if (!username || !password) {
-        alert('Completa todos los campos.');
-        return;
-      }
-
-      db.ref('users').once('value').then(snapshot => {
-        const users = snapshot.val() || {};
-        if (Object.values(users).some(user => user.username === username)) {
-          alert('Ese usuario ya existe.');
-          return;
-        }
-
-        saveUser ({ username, password });
-        elements.registerForm.reset();
-        hideModal('registerModal');
-        alert('Usuario registrado con éxito.');
-      });
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       loadChismes();
 
@@ -319,12 +259,6 @@
       elements.closeChisme.addEventListener('click', () => hideModal('addChismeModal'));
       elements.loginForm.addEventListener('submit', handleLogin);
       elements.chismeForm.addEventListener('submit', addChisme);
-      elements.registerToggle.addEventListener('click', () => {
-        hideModal('loginModal');
-        showModal('registerModal');
-      });
-      elements.closeRegister.addEventListener('click', () => hideModal('registerModal'));
-      elements.registerForm.addEventListener('submit', registerUser );
     });
   </script>
 </body>

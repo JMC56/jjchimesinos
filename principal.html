@@ -120,8 +120,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const adminCredentials = { username: 'adminparadiso', password: 'chismes123' };
-    let currentUser     = null;
+    let currentUser  = null;
 
     const elements = {
       adminBtn: document.getElementById('adminBtn'),
@@ -154,7 +153,6 @@
         elements.chismesContainer.innerHTML = '';
         const chismesData = snapshot.val() || {};
         
-        // Convert to array and sort by timestamp (newest first)
         const chismesArray = Object.entries(chismesData).map(([id, chisme]) => ({
           id,
           ...chisme
@@ -207,13 +205,19 @@
         return;
       }
 
-      if (username === adminCredentials.username && password === adminCredentials.password) {
-        currentUser   = username;
-        hideModal('loginModal');
-        showModal('addChismeModal');
-      } else {
-        alert('Credenciales inválidas');
-      }
+      // Verificar en la base de datos de Firebase
+      db.ref('users').once('value').then(snapshot => {
+        const users = snapshot.val() || {};
+        const match = Object.values(users).some(user => user.username === username && user.password === password);
+        
+        if (match) {
+          currentUser  = username;
+          hideModal('loginModal');
+          showModal('addChismeModal'); // Mostrar el modal para agregar chismes
+        } else {
+          alert('Credenciales inválidas');
+        }
+      });
     }
 
     function addChisme(e) {
